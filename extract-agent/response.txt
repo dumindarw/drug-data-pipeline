@@ -1,0 +1,1 @@
+{"KsqlServerInfo":{"version":"0.28.2","kafkaClusterId":"Xe93NUdKT1qtDBE3Ccc1fQ","ksqlServiceId":"ksql_service_2_","serverStatus":"RUNNING"}}

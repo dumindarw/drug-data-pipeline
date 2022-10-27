@@ -1,0 +1,6 @@
+[mariadb]
+log_error                              = mariadbd.err
+character_set_server                   = utf8
+collation_server                       = utf8_general_ci
+default-storage-engine                 = COLUMNSTORE
+columnstore_use_import_for_batchinsert = ALWAYS

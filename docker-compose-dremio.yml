@@ -1,0 +1,20 @@
+version: '3.1'
+
+services:
+  data-extract-agent:
+    build: ./extract-agent/
+    volumes:
+      - ./dremio_files:/usr/src/app/files
+  dremio:
+    image: dremio/dremio-oss
+    restart: always
+    ports:
+      - 45678:45678
+      - 31010:31010
+      - 9047:9047
+    volumes:
+      - ./extracted-files:/lake
+      - ./dremio-data:/opt/dremio/data
+
+
+
