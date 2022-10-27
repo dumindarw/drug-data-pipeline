@@ -2,3 +2,5 @@ columnstore-data
 dremio-data
 extracted-files
 mariadb-data
+extract-agent/fda_drugs.zip
+extract-agent/ema_drugs.xlsx
