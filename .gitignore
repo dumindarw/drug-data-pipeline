@@ -4,5 +4,10 @@ extracted-files
 mariadb-data
 extract-agent/fda_drugs.zip
 extract-agent/ema_drugs.xlsx
-druid/
 kylin/
+druid/broker_var/    
+druid/druid_shared/ 
+druid/historical_var/
+druid/router_var/
+druid/coordinator_var/
+druid/middle_var/
