@@ -119,6 +119,143 @@ services:
 #    networks:
 #      - kafka-network
 
+#  kylin:
+#    image: apachekylin/apache-kylin-standalone:4.0.0
+#    mem_limit: 4096m
+#    ports:
+#      - 7070:7070
+#      - 8089:8088
+#      - 50070:50070
+#      - 8032:8032
+#      - 8042:8042    
+#      - 2182:2181
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 8G
+#        reservations:
+#          memory: 8G
+#    volumes:
+#      - ./kylin/produce_kafka_stream.sh:/tmp/produce_kafka_stream.sh
+#    command: ["/tmp/produce_kafka_stream.sh"]      
+#    networks:
+#      - kafka-network 
+
+  postgres:
+    container_name: postgres
+    image: postgres:14.5
+    volumes:
+      - ./postgres/metadata_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=Andruid
+      - POSTGRES_USER=druid
+      - POSTGRES_DB=druid
+    networks:
+      - kafka-network 
+
+  coordinator:
+    image: apache/druid:24.0.0
+    container_name: coordinator
+    volumes:
+      - druid_shared:/opt/shared
+      - coordinator_var:/opt/druid/var
+    depends_on: 
+      - zookeeper
+      - postgres
+    ports:
+      - "18081:8081"
+    command:
+      - coordinator
+    env_file:
+      - ./druid/environment
+    networks:
+      - kafka-network 
+
+  broker:
+    image: apache/druid:24.0.0
+    container_name: broker
+    volumes:
+      - broker_var:/opt/druid/var
+    depends_on: 
+      - zookeeper
+      - postgres
+      - coordinator
+    ports:
+      - "18082:8082"
+    command:
+      - broker
+    env_file:
+      - ./druid/environment
+    networks:
+      - kafka-network 
+
+  historical:
+    image: apache/druid:24.0.0
+    container_name: historical
+    volumes:
+      - druid_shared:/opt/shared
+      - historical_var:/opt/druid/var
+    depends_on: 
+      - zookeeper
+      - postgres
+      - coordinator
+    ports:
+      - "18083:8083"
+    command:
+      - historical
+    env_file:
+      - ./druid/environment
+    networks:
+      - kafka-network 
+
+  middlemanager:
+    image: apache/druid:24.0.0
+    container_name: middlemanager
+    volumes:
+      - druid_shared:/opt/shared
+      - middle_var:/opt/druid/var
+    depends_on: 
+      - zookeeper
+      - postgres
+      - coordinator
+    ports:
+      - "18091:8091"
+      - "18100-18105:8100-8105"
+    command:
+      - middleManager
+    env_file:
+      - ./druid/environment
+    networks:
+      - kafka-network 
+
+  router:
+    image: apache/druid:24.0.0
+    container_name: router
+    volumes:
+      - router_var:/opt/druid/var
+    depends_on:
+      - zookeeper
+      - postgres
+      - coordinator
+    ports:
+      - "18888:8888"
+    command:
+      - router
+    env_file:
+      - ./druid/environment
+    networks:
+      - kafka-network 
+
 networks:
   kafka-network:
     name: kafkanet
+
+
+volumes:
+  metadata_data: {}
+  middle_var: {}
+  historical_var: {}
+  broker_var: {}
+  coordinator_var: {}
+  router_var: {}
+  druid_shared: {}

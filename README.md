@@ -62,4 +62,16 @@ select * from ema_drugs_avro_stream_2;
 docker run -d -p 3306:3306 --name mcs_container mariadb/columnstore
 
 mariadb --protocol tcp --host localhost -u coluser --password=col789
+
+
 ```
+
+## Kylin
+
+
+https://github.com/weibin0516/kylin_docker/blob/master/entrypoint.sh
+
+
+## Druid instead Kylin ?
+
+https://druid.apache.org/docs/latest/querying/sql-api.html#submit-a-query
