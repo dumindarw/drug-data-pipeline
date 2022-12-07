@@ -1,0 +1,180 @@
+version: '3.5'
+
+services:
+
+  mongo:
+    image: mongo:5.0.14
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: tr33r00t
+      MONGO_INITDB_DATABASE: drugdb
+    ports:
+      - 37017:27017
+    volumes:
+      - ./mongo/mongo-data:/data/db
+    networks:
+      - drug-network  
+
+  zookeeper:
+    image: quay.io/strimzi/kafka:0.30.0-kafka-3.2.0
+    container_name: zookeeper
+    command: [
+      "sh", "-c",
+      "bin/zookeeper-server-start.sh config/zookeeper.properties"
+    ]
+    ports:
+      - "2181:2181"
+    environment:
+      LOG_DIR: /tmp/logs
+    networks:
+      - drug-network
+
+  kafka:
+    image: quay.io/strimzi/kafka:0.30.0-kafka-3.2.0
+    container_name: kafka
+    command: [
+      "sh", "-c",
+      "bin/kafka-server-start.sh config/server.properties --override listeners=$${KAFKA_LISTENERS} --override advertised.listeners=$${KAFKA_ADVERTISED_LISTENERS} --override zookeeper.connect=$${KAFKA_ZOOKEEPER_CONNECT}"
+    ]
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      LOG_DIR: "/tmp/logs"
+      #KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://192.168.1.7:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: 192.168.1.7
+    networks:
+      - drug-network
+
+  connect:
+    image: confluentinc/cp-kafka-connect-base:7.2.2
+    ports:
+      - 8083:8083
+    hostname: connect
+    container_name: connect
+    depends_on:
+      - zookeeper
+      - kafka
+    networks:
+      - drug-network
+    environment:
+      KAFKA_JMX_PORT: 35000
+      KAFKA_JMX_HOSTNAME: localhost
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: connect-cluster-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+      CONNECT_CONNECTIONS_MAX_IDLE_MS: 180000
+      CONNECT_METADATA_MAX_AGE_MS: 180000
+      CONNECT_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing Connector"
+        confluent-hub install --no-prompt mongodb/kafka-connect-mongodb:1.8.0
+        #
+        echo "Launching Kafka Connect worker"
+        /etc/confluent/docker/run &
+        #
+        sleep infinity
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:5.4.10
+    container_name: schema-registry
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka:9092"
+    networks:
+      - drug-network
+
+  ksql-server:
+    image: confluentinc/ksqldb-server:0.28.2
+    container_name: ksql-server
+    ports:
+      - 8088:8088
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: kafka:9092
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_KSQL_SERVICE_ID: ksql_service_2_
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      KSQL_CONNECT_GROUP_ID: "ksql-connect-cluster"
+      KSQL_CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      KSQL_CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      KSQL_CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      KSQL_CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      KSQL_CONNECT_CONFIG_STORAGE_TOPIC: "_ksql-connect-configs"
+      KSQL_CONNECT_OFFSET_STORAGE_TOPIC: "_ksql-connect-offsets"
+      KSQL_CONNECT_STATUS_STORAGE_TOPIC: "_ksql-connect-statuses"
+      KSQL_CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      KSQL_CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      KSQL_CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+    depends_on:
+      - kafka 
+      - schema-registry    
+    networks:
+      - drug-network
+
+  ksqldb-cli:
+    image: confluentinc/ksqldb-cli:0.28.2
+    container_name: ksql-cli
+    entrypoint: /bin/sh
+    tty: true
+    volumes:
+      - ./ksql/queries.sql:/ksql/queries.sql
+      - ./ksql/wait-for-ksql-server.sh:/ksql/wait-for-ksql-server.sh
+    command: ["/ksql/wait-for-ksql-server.sh"]
+    depends_on:
+      - kafka
+      - ksql-server
+    networks:
+      - drug-network
+
+  data-extract-agent:
+    build: ./extract-agent/
+    image: extract-agent:latest
+    container_name: extract-agent
+    ports:
+      - 8000:8000
+    volumes:
+      - ./extracted-files:/usr/src/app/files
+    networks:
+      - drug-network      
+
+networks:
+  drug-network:
+    name: drugnet
+
+
+volumes:
+  metadata_data: {}
+  middle_var: {}
+  historical_var: {}
+  broker_var: {}
+  coordinator_var: {}
+  router_var: {}
+  druid_shared: {}

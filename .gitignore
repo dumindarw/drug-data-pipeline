@@ -11,3 +11,5 @@ druid/historical_var/
 druid/router_var/
 druid/coordinator_var/
 druid/middle_var/
+mongo/mongo-data
+postgres

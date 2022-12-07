@@ -23,7 +23,7 @@ docker run -it --name kafka-topics -p 29092:9092  quay.io/strimzi/kafka:0.30.0-k
 ## KSQL
 
 ```
-ksql -- http://ksqldb-server:8088
+ksql -- http://ksql-server:8088
 
 SHOW TOPICS;
 
@@ -75,3 +75,12 @@ https://github.com/weibin0516/kylin_docker/blob/master/entrypoint.sh
 ## Druid instead Kylin ?
 
 https://druid.apache.org/docs/latest/querying/sql-api.html#submit-a-query
+
+
+## Kafka-Mongo sink
+
+curl -X POST -H "Content-Type: application/json" -d @drugsink.json http://127.0.0.1:8083/connectors
+
+curl -X DELETE -H "Content-Type: application/json" http://127.0.0.1:8083/connectors/drug-sink
+
+curl -X GET -H "Content-Type: application/json" http://127.0.0.1:8083/connectors/drug-sink/status
