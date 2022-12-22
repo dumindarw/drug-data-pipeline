@@ -20,7 +20,11 @@ do
 done
 
 
-curl -X POST -H "Content-Type: application/json" -d '{"name": "drug-sink", "config": {  "connector.class": "com.mongodb.kafka.connect.MongoSinkConnector", "topics": "FORMATTED_EMA_DRUGS_JSON_STREAM",  "connection.uri": "mongodb://root:tr33r00t@mongo:27017/?authSource=admin","key.converter": "org.apache.kafka.connect.storage.StringConverter", "value.converter": "org.apache.kafka.connect.json.JsonConverter", "value.converter.schemas.enable": false, "database": "drugdb", "collection": "ema_drugs" }}' http://connect:8083/connectors
+curl -X POST -H "Content-Type: application/json" -d '{"name": "ema-drug-sink", "config": {  "connector.class": "com.mongodb.kafka.connect.MongoSinkConnector", "topics": "FORMATTED_EMA_DRUGS_JSON_STREAM",  "connection.uri": "mongodb://root:tr33r00t@mongo:27017/?authSource=admin","key.converter": "org.apache.kafka.connect.storage.StringConverter", "value.converter": "org.apache.kafka.connect.json.JsonConverter", "value.converter.schemas.enable": false, "database": "drugdb", "collection": "ema_drugs" }}' http://connect:8083/connectors
+
+
+curl -X POST -H "Content-Type: application/json" -d '{"name": "fda-drug-sink", "config": {  "connector.class": "com.mongodb.kafka.connect.MongoSinkConnector", "topics": "FORMATTED_FDA_DRUGS_JSON_STREAM",  "connection.uri": "mongodb://root:tr33r00t@mongo:27017/?authSource=admin","key.converter": "org.apache.kafka.connect.storage.StringConverter", "value.converter": "org.apache.kafka.connect.json.JsonConverter", "value.converter.schemas.enable": false, "database": "drugdb", "collection": "fda_drugs" }}' http://connect:8083/connectors
+
 
 >&2 echo "Extractor Agent is completed - executing command"
 

@@ -1,5 +1,5 @@
 {
-    "name": "drug-sink",
+    "name": "ema-drug-sink",
     "config": {
       "connector.class": "com.mongodb.kafka.connect.MongoSinkConnector",
       "topics": "FORMATTED_EMA_DRUGS_JSON_STREAM",
@@ -8,6 +8,7 @@
       "value.converter": "org.apache.kafka.connect.json.JsonConverter",
       "value.converter.schemas.enable": false,
       "database": "drugdb",
-      "collection": "ema_drugs"
+      "collection": "ema_drugs",
+      "change.data.capture.handler": "com.mongodb.kafka.connect.sink.cdc.mongodb.ChangeStreamHandler"
     }
   }

@@ -13,3 +13,5 @@ druid/coordinator_var/
 druid/middle_var/
 mongo/mongo-data
 postgres
+grafana/grafana_data
+prometheus/prometheus_data

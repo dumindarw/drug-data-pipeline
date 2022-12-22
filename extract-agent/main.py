@@ -35,8 +35,13 @@ producer = KafkaProducer(bootstrap_servers='kafka:9092', value_serializer=lambda
 
 ema_drugs_json = json.loads(ema_drugs)
 
+fda_drugs_json = json.loads(fda_drugs)
+
 for jsonline in ema_drugs_json:
   producer.send('ema_drugs', jsonline)
+
+for jsonline_fda in fda_drugs_json:
+  producer.send('fda_drugs', jsonline_fda)
 
 PORT = 8000
 

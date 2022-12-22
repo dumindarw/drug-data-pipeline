@@ -41,6 +41,7 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
+      - "7071:7071"
     environment:
       LOG_DIR: "/tmp/logs"
       #KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
@@ -48,6 +49,10 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_HOST_NAME: 192.168.1.7
+      KAFKA_OPTS: ' -javaagent:$KAFKA_HOME/libs/jmx_prometheus_javaagent-0.17.2.jar=7071:$KAFKA_HOME/config/jmx_exporter.yml'
+    volumes:
+      - ./kafka/libs:$KAFKA_HOME/libs
+      - ./kafka/config/jmx_exporter.yml:$KAFKA_HOME/config/jmx_exporter.yml
     networks:
       - drug-network
 
@@ -165,16 +170,42 @@ services:
     networks:
       - drug-network      
 
+  prom:
+    image: prom/prometheus:v2.40.3 
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus_data:/prometheus
+    command: "--config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus"
+    ports:
+      - 9090:9090
+    networks:
+      - drug-network        
+
+  grafana:
+    image: grafana/grafana:9.2.6
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: pass123
+      GF_SECURITY_ADMIN_USER: admin
+    volumes:
+      - ./grafana/grafana_data:/var/lib/grafana
+    ports:
+      - 3000:3000
+    user: "472"
+    networks:
+      - drug-network 
+
+  mongo-exporter:
+    image: percona/mongodb_exporter:2.32.0
+    ports:
+      - 9216:9216
+      - 17001:17001
+    command:
+      - --mongodb.uri=mongodb://root:tr33r00t@mongo:27017/?authSource=admin
+      - --mongodb.collstats-colls=drugdb.ema_drugs
+      - --collect-all
+    networks:
+      - drug-network     
+
 networks:
   drug-network:
     name: drugnet
-
-
-volumes:
-  metadata_data: {}
-  middle_var: {}
-  historical_var: {}
-  broker_var: {}
-  coordinator_var: {}
-  router_var: {}
-  druid_shared: {}

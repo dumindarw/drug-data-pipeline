@@ -84,3 +84,10 @@ curl -X POST -H "Content-Type: application/json" -d @drugsink.json http://127.0.
 curl -X DELETE -H "Content-Type: application/json" http://127.0.0.1:8083/connectors/drug-sink
 
 curl -X GET -H "Content-Type: application/json" http://127.0.0.1:8083/connectors/drug-sink/status
+
+
+## Prometheus / Grafana
+
+chown 65534:65534 /prometheus/prometheus_data
+
+chown 472:472 ./grafana/grafana_data/ -R
