@@ -87,7 +87,7 @@ services:
       CONNECT_METADATA_MAX_AGE_MS: 180000
       CONNECT_AUTO_CREATE_TOPICS_ENABLE: "true"
       CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
-      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
     command:
       - bash
@@ -201,7 +201,7 @@ services:
       - 17001:17001
     command:
       - --mongodb.uri=mongodb://root:tr33r00t@mongo:27017/?authSource=admin
-      - --mongodb.collstats-colls=drugdb.ema_drugs
+      - --mongodb.collstats-colls=drugdb.ema_drugs,drugdb.ema_drugs
       - --collect-all
     networks:
       - drug-network     
